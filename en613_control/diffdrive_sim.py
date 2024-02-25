@@ -16,7 +16,7 @@ class DiffDriveSimulator(Node):
         super().__init__('diffdrive_sim')
 
         self.wheel_radius: float = 0.4
-        self.base_length: float = 0.825
+        self.wheel_base: float = 0.825
 
         self.X = np.array([0., 0., 0.])
         self.Q = np.array([0., 0.])
@@ -41,16 +41,24 @@ class DiffDriveSimulator(Node):
 
         x_v = r_2 * u_sum * np.cos(x[2])
         y_v = r_2 * u_sum * np.sin(x[2])
-        theta_v = (self.wheel_radius / self.base_length) * u_diff
+        theta_v = (self.wheel_radius / self.wheel_base) * u_diff
 
         return np.array([x_v, y_v, theta_v])
 
-
     def inverse(self, x: np.ndarray, v: np.ndarray) -> np.ndarray:
-        inv_wheel_radius =  1 / self.wheel_radius
+        inv_wheel_radius = 1 / self.wheel_radius
         x_v, y_v, theta_v = v
+        sin_theta = np.sin(x[2])
+        cos_theta = np.cos(x[2])
 
-        u_l = inv_wheel_radius * ()
+        x_part = inv_wheel_radius * x_v * cos_theta
+        y_part = inv_wheel_radius * y_v * sin_theta
+        theta_part = inv_wheel_radius * 0.5 * self.wheel_base * theta_v
+
+        u_l = x_part + y_part - theta_part
+        u_r = x_part + y_part + theta_part
+
+        return np.array([u_l, u_r])
 
     def pose_reset_callback(self, _, res: Trigger):
         self.X = np.array([0., 0., 0.])
