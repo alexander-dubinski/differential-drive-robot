@@ -51,12 +51,11 @@ class DiffDriveSimulator(Node):
         sin_theta = np.sin(x[2])
         cos_theta = np.cos(x[2])
 
-        x_part = inv_wheel_radius * x_v * cos_theta
-        y_part = inv_wheel_radius * y_v * sin_theta
+        pos_part = inv_wheel_radius * (x_v * cos_theta + y_v * sin_theta)
         theta_part = inv_wheel_radius * 0.5 * self.wheel_base * theta_v
 
-        u_l = x_part + y_part - theta_part
-        u_r = x_part + y_part + theta_part
+        u_l = pos_part - theta_part
+        u_r = pos_part + theta_part
 
         return np.array([u_l, u_r])
 
