@@ -15,7 +15,7 @@ class DiffDriveSimulator(Node):
         super().__init__('diffdrive_sim')
 
         self.wheel_radius: float = 0.4
-        self.wheel_base: float = 0.825
+        self.wheel_base: float = 0.875
 
         self.X = np.array([0., 0., 0.])
         self.Q = np.array([0., 0.])
@@ -29,7 +29,7 @@ class DiffDriveSimulator(Node):
         self.tf_broadcaster_ = TransformBroadcaster(self, qos_profile)
         self.joint_state_publisher_ = self.create_publisher(JointState, '/joint_states', qos_profile)
 
-        self.pose_reset_srv_ = self.create_service(Trigger, 'robot_pose_reset', self.reset_pose_callback)
+        self.pose_reset_srv_ = self.create_service(Trigger, 'robot_pose_reset', self.pose_reset_callback)
 
         self.dt = 1 / 30.0
         self.clock = self.create_timer(self.dt, self.clock_callback)
@@ -41,13 +41,16 @@ class DiffDriveSimulator(Node):
 
     def clock_callback(self):
 
-        u_l, u_r = self.inverse(self.X, self.vel_cmd_)
+        wheel_vel = self.inverse(self.X, self.vel_cmd_)
+        u_l, u_r = wheel_vel
         self.Q[0] += u_l * self.dt
         self.Q[1] += u_r * self.dt
 
-        self.X[0] += self.vel_cmd_[0] * self.dt
-        self.X[1] += self.vel_cmd_[1] * self.dt
-        self.X[2] += self.vel_cmd_[2] * self.dt
+        x_v, y_v, theta_v = self.forward(self.X, wheel_vel)
+
+        self.X[0] += x_v * self.dt
+        self.X[1] += y_v * self.dt
+        self.X[2] += theta_v * self.dt
 
         now = self.get_clock().now()
 
@@ -58,7 +61,7 @@ class DiffDriveSimulator(Node):
         odom_trans.child_frame_id = 'chassis'
         odom_trans.transform.translation.x = self.X[0]
         odom_trans.transform.translation.y = self.X[1]
-        odom_trans.transform.translation.z = 0
+        odom_trans.transform.translation.z = self.wheel_radius
         odom_trans.transform.rotation = DiffDriveSimulator.euler_to_quaternion(0., 0., self.X[2])
 
 
@@ -84,11 +87,9 @@ class DiffDriveSimulator(Node):
 
     def inverse(self, x: np.ndarray, v: np.ndarray) -> np.ndarray:
         inv_wheel_radius = 1 / self.wheel_radius
-        x_v, y_v, theta_v = v
-        sin_theta = np.sin(x[2])
-        cos_theta = np.cos(x[2])
+        x_v, _, theta_v = v
 
-        pos_part = inv_wheel_radius * (x_v * cos_theta + y_v * sin_theta)
+        pos_part = inv_wheel_radius * x_v
         theta_part = inv_wheel_radius * 0.5 * self.wheel_base * theta_v
 
         u_l = pos_part - theta_part
@@ -105,10 +106,17 @@ class DiffDriveSimulator(Node):
 
     @staticmethod
     def euler_to_quaternion(r: float, p: float, y: float) -> Quaternion:
-        qx = np.sin(r / 2) * np.cos(p / 2) * np.cos(y / 2) - np.cos(r / 2) * np.sin(p / 2) * np.sin(y / 2)
-        qy = np.cos(r / 2) * np.sin(p / 2) * np.cos(y / 2) + np.sin(r / 2) * np.cos(p / 2) * np.sin(y / 2)
-        qz = np.cos(r / 2) * np.cos(p / 2) * np.sin(y / 2) - np.sin(r / 2) * np.sin(p / 2) * np.cos(y / 2)
-        qw = np.cos(r / 2) * np.cos(p / 2) * np.cos(y / 2) + np.sin(r / 2) * np.sin(p / 2) * np.sin(y / 2)
+        sr = np.sin(r / 2)
+        cr = np.cos(r / 2)
+        sp = np.sin(p / 2)
+        cp = np.cos(p / 2)
+        sy = np.sin(y / 2)
+        cy = np.cos(y / 2)
+
+        qx = sr * cp * cy - cr * sp * sy
+        qy = cr * sp * cy + sr * cp * sy
+        qz = cr * cp * sy - sr * sp * cy
+        qw = cr * cp * cy + sr * sp * sy
         return Quaternion(x=qx, y=qy, z=qz, w=qw)
 
 
