@@ -13,6 +13,7 @@ class DiffDriveSimulator(Node):
 
     def __init__(self):
         super().__init__('diffdrive_sim')
+        self.dt = 1 / 30.0
 
         self.wheel_radius: float = 0.4
         self.wheel_base: float = 0.875
@@ -31,7 +32,6 @@ class DiffDriveSimulator(Node):
 
         self.pose_reset_srv_ = self.create_service(Trigger, 'robot_pose_reset', self.pose_reset_callback)
 
-        self.dt = 1 / 30.0
         self.clock = self.create_timer(self.dt, self.clock_callback)
 
     def velocity_cmd_callback(self, msg: Twist):
@@ -62,7 +62,7 @@ class DiffDriveSimulator(Node):
         odom_trans.transform.translation.x = self.X[0]
         odom_trans.transform.translation.y = self.X[1]
         odom_trans.transform.translation.z = self.wheel_radius
-        odom_trans.transform.rotation = DiffDriveSimulator.euler_to_quaternion(0., 0., self.X[2])
+        odom_trans.transform.rotation = self.euler_to_quaternion(0., 0., self.X[2])
 
 
         odom_trans.header.stamp = joint_state.header.stamp = now.to_msg()
