@@ -97,9 +97,8 @@ class DiffDriveSimulator(Node):
         return np.array([u_l, u_r])
 
     def pose_reset_callback(self, _, res: Trigger):
-        self.X = np.array([0., 0., 0.])
-        self.Q = np.array([0., 0.])
-        self.vel_cmd_ = np.array([0., 0., 0.])
+        self.X[0] = self.X[1] = self.X[2] = 0.0
+        self.Q[0] = self.Q[1] = 0.0
 
         res.success = True
         res.message = ''

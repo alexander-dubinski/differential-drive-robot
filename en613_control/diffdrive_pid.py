@@ -13,6 +13,8 @@ class DiffDrivePID(Node):
     def __init__(self):
         super().__init__('diffdrive_pid')
         self.pose_offset = 0.4125
+        self.k_p = 2.4
+        self.k_d = 0.9
         self.dt = 1 / 30.0
         self.goal_pose = np.array([self.pose_offset, 0.])
         self.pose = np.array([0., 0., 0.])
@@ -28,7 +30,7 @@ class DiffDrivePID(Node):
     def clock_callback(self) -> None:
         try:
             when = rclpy.time.Time()
-            trans = self.tf_buffer_.lookup_transform('odom', 'chassis', when, timeout=Duration(seconds=5.0))
+            trans = self.tf_buffer_.lookup_transform('odom', 'chassis', when, timeout=Duration(seconds=2.0))
         except LookupException:
             self.get_logger().info('Transform not ready, waiting...')
             return
@@ -39,28 +41,29 @@ class DiffDrivePID(Node):
         sin_theta = np.sin(theta)
         cos_theta = np.cos(theta)
 
-        x_p = x + self.pose_offset * cos_theta
-        y_p = y + self.pose_offset * sin_theta
+        ps = np.array([x + self.pose_offset * cos_theta,
+                       y + self.pose_offset * sin_theta])
+
         x_vel = (x - self.pose[0]) / self.dt
         y_vel = (y - self.pose[1]) / self.dt
         theta_vel = (theta - self.pose[2]) / self.dt
-        x_p_vel = x_vel - self.pose_offset * theta_vel * sin_theta
-        y_p_vel = y_vel + self.pose_offset * theta_vel * cos_theta
 
-        k_p = 1.2
-        k_d = 0.9
-        x_g, y_g = self.goal_pose
+        p_vel = np.array([x_vel - self.pose_offset * theta_vel * sin_theta,
+                          y_vel + self.pose_offset * theta_vel * cos_theta])
 
         rot_mat = np.array([[cos_theta, sin_theta],
                             [-sin_theta, cos_theta]])
 
-        pd = -k_p * np.array([x_p - x_g, y_p - y_g]) - k_d * np.array([x_p_vel, y_p_vel])
+        pd = -1 * self.k_p * (ps - self.goal_pose) - self.k_d * p_vel
 
         v_f, wl = rot_mat @ pd
 
         self.pose[0], self.pose[1], self.pose[2] = x, y, theta
 
-        twist = Twist(linear=Vector3(x=v_f, y=0.0, z=0.0), angular=Vector3(x=0.0, y=0.0, z=wl))
+        twist = Twist(
+            linear=Vector3(x=v_f, y=0.0, z=0.0),
+            angular=Vector3(x=0.0, y=0.0, z=wl)
+        )
 
         self.cmd_vel_publisher_.publish(twist)
 
