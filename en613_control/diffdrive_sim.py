@@ -16,7 +16,7 @@ class DiffDriveSimulator(Node):
         self.dt = 1 / 30.0
 
         self.wheel_radius: float = 0.4
-        self.wheel_base: float = 0.875
+        self.wheel_base: float = 0.825
 
         self.X = np.array([0., 0., 0.])
         self.Q = np.array([0., 0.])
@@ -64,7 +64,6 @@ class DiffDriveSimulator(Node):
         odom_trans.transform.translation.z = self.wheel_radius
         odom_trans.transform.rotation = self.euler_to_quaternion(0., 0., self.X[2])
 
-
         odom_trans.header.stamp = joint_state.header.stamp = now.to_msg()
 
         joint_state.name = ['chassis_to_left_wheel', 'chassis_to_right_wheel']
@@ -100,6 +99,8 @@ class DiffDriveSimulator(Node):
     def pose_reset_callback(self, _, res: Trigger):
         self.X = np.array([0., 0., 0.])
         self.Q = np.array([0., 0.])
+        self.vel_cmd_ = np.array([0., 0., 0.])
+
         res.success = True
         res.message = ''
         return res
