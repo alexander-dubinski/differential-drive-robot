@@ -12,7 +12,7 @@ from example_interfaces.srv import Trigger
 class DiffDriveSimulator(Node):
 
     def __init__(self):
-        super().__init__('diffdrive_sim')
+        super().__init__('simulator')
         self.dt = 1 / 30.0
 
         self.wheel_radius: float = 0.4
@@ -123,11 +123,11 @@ class DiffDriveSimulator(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    diffdrive_sim = DiffDriveSimulator()
+    simulator = DiffDriveSimulator()
 
-    rclpy.spin(diffdrive_sim)
+    rclpy.spin(simulator)
 
-    diffdrive_sim.destroy_node()
+    simulator.destroy_node()
     rclpy.shutdown()
 
 

@@ -9,7 +9,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
 
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
-    urdf = os.path.join(get_package_share_directory('en613_control'), 'basic_robot.urdf')
+    urdf = os.path.join(get_package_share_directory('diffdrive'), 'basic_robot.urdf')
 
     with open(urdf, 'r') as f:
         robot_description = f.read()

@@ -8,10 +8,10 @@ from rclpy.duration import Duration
 from geometry_msgs.msg import PoseStamped, Quaternion, Twist, Vector3
 
 
-class DiffDrivePID(Node):
+class DiffDrivePIDController(Node):
 
     def __init__(self):
-        super().__init__('diffdrive_pid')
+        super().__init__('pid_controller')
         self.pose_offset = 0.4125
         self.k_p = 2.4
         self.k_d = 0.9
@@ -79,11 +79,11 @@ class DiffDrivePID(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    diffdrive_pid = DiffDrivePID()
+    controller = DiffDrivePIDController()
 
-    rclpy.spin(diffdrive_pid)
+    rclpy.spin(controller)
 
-    diffdrive_pid.destroy_node()
+    controller.destroy_node()
     rclpy.shutdown()
 
 

@@ -2,7 +2,7 @@ import os
 from setuptools import setup
 from glob import glob
 
-package_name = 'en613_control'
+package_name = 'diffdrive'
 
 setup(
     name=package_name,
@@ -24,8 +24,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'diffdrive_sim = en613_control.diffdrive_sim:main',
-            'diffdrive_pid = en613_control.diffdrive_pid:main'
+            'simulator = diffdrive.simulator:main',
+            'pid_controller = diffdrive.pid_controller:main'
         ],
     },
 )
