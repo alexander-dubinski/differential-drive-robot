@@ -12,6 +12,7 @@ class DiffDrivePIDController(Node):
 
     def __init__(self):
         super().__init__('pid_controller')
+        self.length = 0.825
         self.pose_offset = 0.4125
         self.k_p = 2.4
         self.k_d = 0.9
@@ -57,12 +58,13 @@ class DiffDrivePIDController(Node):
         pd = -1 * self.k_p * (ps - self.goal_pose) - self.k_d * p_vel
 
         v_f, wl = rot_mat @ pd
+        w = wl / self.length
 
         self.pose[0], self.pose[1], self.pose[2] = x, y, theta
 
         twist = Twist(
             linear=Vector3(x=v_f, y=0.0, z=0.0),
-            angular=Vector3(x=0.0, y=0.0, z=wl)
+            angular=Vector3(x=0.0, y=0.0, z=w)
         )
 
         self.cmd_vel_publisher_.publish(twist)
